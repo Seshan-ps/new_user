@@ -6,10 +6,13 @@ import {
   Platform, 
   LayoutAnimation, 
   UIManager,
+  TouchableOpacity,
+  Text,
   StatusBar as RNStatusBar
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { HomeTabBarSvg, ChatTabBarSvg, CommunityTabBarSvg, EventsTabBarSvg, ProfileTabBarSvg } from './TabBarSvgs';
+import { Home as HomeIcon, MessageSquare as ChatIcon, Users as UsersIcon, Calendar as CalendarIcon, User as UserIcon } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import Screen components
 import HomeFeedScreen from './HomeFeedScreen';
@@ -28,9 +31,11 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onForgotPassword, showAlert }) {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('home');
   const [pendingAdminMessage, setPendingAdminMessage] = useState(null);
   const [activeDirectChatUser, setActiveDirectChatUser] = useState(null);
+  const [callState, setCallState] = useState(null);
 
   // Lifted states loaded from mockDb
   const [directoryMembers, setDirectoryMembers] = useState([]);
@@ -287,7 +292,6 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
   };
 
   const handleTabPress = (tabKey) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setActiveTab(tabKey);
   };
 
@@ -297,7 +301,7 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
       <SafeAreaView style={styles.safeArea}>
         {/* Dynamic Tab Contents - Mounted Concurrently and visibility toggled via display style to persist state */}
         <View style={styles.tabContentContainer}>
-          <View style={{ flex: 1, display: activeTab === 'home' ? 'flex' : 'none' }}>
+          <View style={{ flex: 1, display: (activeTab === 'home' || activeTab === 'directory') ? 'flex' : 'none' }}>
             <HomeFeedScreen 
               onNavigate={handleTabPress} 
               hasUnreadNotifications={notifications.some(n => !n.read)} 
@@ -307,6 +311,9 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
               setConnectionStatuses={handleUpdateConnectionStatus}
               currentUser={currentUser}
               showAlert={showAlert}
+              showDirectory={activeTab === 'directory'}
+              setShowDirectory={(val) => handleTabPress(val ? 'directory' : 'home')}
+              safeAreaBottom={insets.bottom}
             />
           </View>
           
@@ -336,6 +343,9 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
               setChatMessages={handleSaveMessages}
               directoryMembers={directoryMembers}
               showAlert={showAlert}
+              callState={callState}
+              setCallState={setCallState}
+              safeAreaBottom={insets.bottom}
             />
           </View>
 
@@ -352,6 +362,7 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
               setPendingAdminMessage={setPendingAdminMessage}
               currentUser={currentUser}
               showAlert={showAlert}
+              safeAreaBottom={insets.bottom}
             />
           </View>
 
@@ -379,6 +390,7 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
               connectionStatuses={connectionStatuses}
               setConnectionStatuses={handleUpdateConnectionStatus}
               showAlert={showAlert}
+              safeAreaBottom={insets.bottom}
             />
           </View>
 
@@ -393,14 +405,43 @@ export default function HomeScreen({ currentUser, setCurrentUser, onLogout, onFo
           </View>
         </View>
 
-        {/* Floating Custom Bottom Nav Bar rendering the exact designer SVGs */}
-        <View style={styles.bottomTabBarContainer}>
-          {activeTab === 'home' && <HomeTabBarSvg onPress={handleTabPress} />}
-          {activeTab === 'chat' && <ChatTabBarSvg onPress={handleTabPress} />}
-          {activeTab === 'community' && <CommunityTabBarSvg onPress={handleTabPress} />}
-          {activeTab === 'events' && <EventsTabBarSvg onPress={handleTabPress} />}
-          {activeTab === 'profile' && <ProfileTabBarSvg onPress={handleTabPress} />}
-        </View>
+        {/* Floating Custom Bottom Nav Bar with capsule styling */}
+        {!callState && (
+          <View style={[styles.bottomTabBarContainer, { paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : (Platform.OS === 'ios' ? 16 : 20) }]}>
+            <View style={styles.tabBar}>
+              {[
+                { key: 'home', name: 'Home', icon: HomeIcon },
+                { key: 'chat', name: 'Chat', icon: ChatIcon },
+                { key: 'community', name: 'Community', icon: UsersIcon },
+                { key: 'events', name: 'Events', icon: CalendarIcon },
+                { key: 'profile', name: 'Profile', icon: UserIcon },
+              ].map((route) => {
+                const isFocused = activeTab === route.key;
+                const IconComponent = route.icon;
+                const activeColor = '#70B62C'; // Green active state
+                const inactiveColor = '#134074'; // Dark blue inactive state
+                const color = isFocused ? activeColor : inactiveColor;
+
+                return (
+                  <TouchableOpacity
+                    key={route.key}
+                    accessibilityRole="button"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    onPress={() => handleTabPress(route.key)}
+                    style={[styles.tabItem, isFocused ? styles.tabItemActive : null]}
+                  >
+                    <IconComponent size={22} color={color} />
+                    {isFocused && (
+                      <Text style={styles.tabLabel}>
+                        {route.name}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -421,11 +462,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomTabBarContainer: {
-    width: '100%',
-    height: Platform.OS === 'ios' ? 84 : 88, // Increased Android height to 88
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 20,
+    paddingTop: 4,
+    zIndex: 999,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 30,
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: '#03254C',
+    shadowOffset: {
+      width: 0,
+      height: 4
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  tabItem: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 15 : 24, // Added bottom padding of 24 to clear system navigation keys
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20
   },
+  tabItemActive: {
+    backgroundColor: '#f0fdf4' // Soft green background tint for active
+  },
+  tabLabel: {
+    color: '#70B62C',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6
+  }
 });

@@ -78,7 +78,7 @@ const ShieldCheckIllustration = () => (
   </Svg>
 );
 
-export default function ForgotPasswordScreen({ onBackToSignIn, onResetPassword }) {
+export default function ForgotPasswordScreen({ onBackToSignIn, onResetPassword, showAlert }) {
   const [step, setStep] = useState(1);
   const [method, setMethod] = useState('email'); // 'email' or 'phone'
 

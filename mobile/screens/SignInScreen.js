@@ -84,7 +84,7 @@ const AppleIcon = () => (
   </Svg>
 );
 
-export default function SignInScreen({ onSignUp, onLoginSuccess, onForgotPassword, onBack }) {
+export default function SignInScreen({ onSignUp, onLoginSuccess, onForgotPassword, onBack, showAlert }) {
   // Preset matching the mockup screenshot values for demonstration
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');

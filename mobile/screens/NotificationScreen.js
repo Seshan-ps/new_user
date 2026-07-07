@@ -19,7 +19,8 @@ export default function NotificationScreen({
   communitiesList = [],
   receivedJoinRequests = {},
   onApproveJoinRequest,
-  onRejectJoinRequest
+  onRejectJoinRequest,
+  showAlert
 }) {
   const [connectionRequests, setConnectionRequests] = useState([
     { id: 101, username: 'mithran_k', name: 'Mithran Kumar, ACA', avatar: 'MK', avatarColor: '#E0F2FE', time: '3h', status: 'pending' },

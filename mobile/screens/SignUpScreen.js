@@ -17,6 +17,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { supabase } from '../lib/supabase';
+import DatePickerModal from '../components/DatePickerModal';
 
 // Custom inline SVG icons
 const ProfileIcon = () => (
@@ -130,7 +131,7 @@ const StepIndicator = ({ currentStep }) => {
   );
 };
 
-export default function SignUpScreen({ onSignIn, onSignUpSuccess, onBack }) {
+export default function SignUpScreen({ onSignIn, onSignUpSuccess, onBack, showAlert }) {
   // Step State
   const [step, setStep] = useState(1);
 
@@ -150,6 +151,7 @@ export default function SignUpScreen({ onSignIn, onSignUpSuccess, onBack }) {
 
   // Step 2 States
   const [dob, setDob] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [emailOtpCode, setEmailOtpCode] = useState('');
@@ -583,20 +585,23 @@ export default function SignUpScreen({ onSignIn, onSignUpSuccess, onBack }) {
                   {/* DOB Input */}
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Date of Birth</Text>
-                    <View style={styles.inputWrapper}>
+                    <TouchableOpacity 
+                      style={styles.inputWrapper}
+                      onPress={() => setShowDatePicker(true)}
+                      activeOpacity={0.8}
+                    >
                       <View style={styles.inputIcon}>
                         <CalendarIcon />
                       </View>
                       <TextInput
                         style={styles.input}
                         value={dob}
-                        onChangeText={handleDobChange}
-                        placeholder="DD/MM/YYYY"
+                        placeholder="Select Date of Birth"
                         placeholderTextColor="#94A3B8"
-                        keyboardType="number-pad"
-                        maxLength={10}
+                        editable={false}
+                        pointerEvents="none"
                       />
-                    </View>
+                    </TouchableOpacity>
                   </View>
 
                   {/* Gender Selector */}
@@ -858,6 +863,13 @@ export default function SignUpScreen({ onSignIn, onSignUpSuccess, onBack }) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <DatePickerModal
+        visible={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(selectedDate) => setDob(selectedDate)}
+        currentValue={dob}
+      />
     </ImageBackground>
   );
 }

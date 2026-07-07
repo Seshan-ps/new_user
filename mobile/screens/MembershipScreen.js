@@ -71,7 +71,8 @@ export default function MembershipScreen({
   onNavigate, 
   isSignUpFlow = false,
   setMembershipPlan,
-  setAutopayEnabled
+  setAutopayEnabled,
+  showAlert
 }) {
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
@@ -261,17 +262,29 @@ export default function MembershipScreen({
   return (
     <View style={styles.screenWrapper}>
       {/* Header Bar with Safe Area Wrapper */}
-      <SafeAreaView style={styles.safeAreaHeader}>
+      {isSignUpFlow ? (
+        <SafeAreaView style={styles.safeAreaHeader}>
+          <View style={styles.headerBar}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => onNavigate('back_to_signup')}
+            >
+              <BackArrowIcon />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Membership</Text>
+          </View>
+        </SafeAreaView>
+      ) : (
         <View style={styles.headerBar}>
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => onNavigate(isSignUpFlow ? 'back_to_signup' : 'profile')}
+            onPress={() => onNavigate('profile')}
           >
             <BackArrowIcon />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Membership</Text>
         </View>
-      </SafeAreaView>
+      )}
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Intro Hero */}
@@ -491,7 +504,7 @@ export default function MembershipScreen({
           </View>
         </View>
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
       {renderCheckoutModal()}
     </View>

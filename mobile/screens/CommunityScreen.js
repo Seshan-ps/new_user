@@ -196,7 +196,8 @@ export default function CommunityScreen({
   pendingAdminMessage,
   setPendingAdminMessage,
   currentUser,
-  showAlert
+  showAlert,
+  safeAreaBottom = 0
 }) {
   const [communitySubView, setCommunitySubView] = useState('list'); // 'list' | 'create' | 'chat' | 'community-detail'
   const [searchQuery, setSearchQuery] = useState('');
@@ -1072,7 +1073,7 @@ export default function CommunityScreen({
               </View>
             ))}
           </View>
-          <View style={{ height: 60 }} />
+          <View style={{ height: 120 }} />
         </ScrollView>
       </View>
     );
@@ -1302,7 +1303,7 @@ export default function CommunityScreen({
 
       {/* Floating Action Button - Create New Community */}
       <TouchableOpacity 
-        style={styles.fab}
+        style={[styles.fab, { bottom: (safeAreaBottom > 0 ? safeAreaBottom + 86 : (Platform.OS === 'ios' ? 110 : 96)) }]}
         activeOpacity={0.85}
         onPress={() => {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -1644,7 +1645,7 @@ export default function CommunityScreen({
             </View>
           </TouchableOpacity>
         </View>
-        <View style={{ height: 60 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </View>
   );
@@ -2597,7 +2598,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 86 : 68,
+    bottom: Platform.OS === 'ios' ? 110 : 96,
     right: 20,
     width: 50,
     height: 50,

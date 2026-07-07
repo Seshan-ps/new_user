@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Modal, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Modal, Text, TouchableOpacity, LogBox } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Ignore specific deprecation warnings for clean runtime logs
+LogBox.ignoreLogs([
+  'setLayoutAnimationEnabledExperimental is currently a no-op',
+  'SafeAreaView has been deprecated'
+]);
 import SplashScreen from './screens/SplashScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -52,8 +59,9 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar style="dark" />
       {screen === 'SPLASH' && (
         <SplashScreen onFinish={() => setScreen('ONBOARDING')} />
       )}
@@ -191,6 +199,7 @@ export default function App() {
         </Modal>
       )}
     </View>
+    </SafeAreaProvider>
   );
 }
 

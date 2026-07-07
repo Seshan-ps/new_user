@@ -395,7 +395,7 @@ Membership: Platinum Member
             </View>
           </View>
           
-          <View style={{ height: 60 }} />
+          <View style={{ height: 130 }} />
         </ScrollView>
 
         {/* QR Code Verification Modal */}
@@ -874,7 +874,7 @@ Membership: Platinum Member
             );
           }
         })()}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 130 }} />
       </ScrollView>
     </View>
   );

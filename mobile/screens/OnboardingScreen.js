@@ -215,7 +215,7 @@ export default function OnboardingScreen({ onFinish }) {
             activeOpacity={0.85}
           >
             <Text style={styles.buttonText}>
-              {activeIndex === 2 ? 'Get Started ' : 'Next '}
+              {activeIndex === 2 ? 'Get Start ' : 'Next '}
               <Text style={styles.buttonArrow}>➔</Text>
             </Text>
           </TouchableOpacity>

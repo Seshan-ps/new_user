@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from '../lib/mockDb';
+import DatePickerModal from '../components/DatePickerModal';
 
 let ImagePicker;
 try {
@@ -53,21 +54,21 @@ const UserCardIcon = () => (
   </Svg>
 );
 
-const PhoneIcon = () => (
-  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const PhoneIcon = ({ color = '#64748B', size = 20 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
   </Svg>
 );
 
-const MailIcon = () => (
-  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const MailIcon = ({ color = '#64748B', size = 20 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
     <Polyline points="22,6 12,13 2,6" />
   </Svg>
 );
 
-const LocationPinIcon = () => (
-  <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const LocationPinIcon = ({ color = '#64748B', size = 20 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <Circle cx="12" cy="10" r="3" />
   </Svg>
@@ -110,6 +111,56 @@ const CameraPlusIcon = () => (
   </Svg>
 );
 
+const QrIcon = ({ color = '#0A52C5', size = 22 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <Rect x="3" y="3" width="7" height="7" />
+    <Rect x="14" y="3" width="7" height="7" />
+    <Rect x="14" y="14" width="7" height="7" />
+    <Rect x="3" y="14" width="7" height="7" />
+    <Line x1="7" y1="7" x2="7" y2="7" strokeWidth="3" />
+    <Line x1="18" y1="7" x2="18" y2="7" strokeWidth="3" />
+    <Line x1="7" y1="18" x2="7" y2="18" strokeWidth="3" />
+    <Path d="M10 10h4v4h-4z" />
+  </Svg>
+);
+
+const DigitalQrCode = ({ primaryColor = '#03254C', accentColor = '#7DBE14' }) => (
+  <Svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+    <Rect x="0" y="0" width="25" height="25" fill={primaryColor} stroke={accentColor} strokeWidth="2" />
+    <Rect x="5" y="5" width="15" height="15" fill={accentColor} />
+    
+    <Rect x="75" y="0" width="25" height="25" fill={primaryColor} stroke={accentColor} strokeWidth="2" />
+    <Rect x="80" y="5" width="15" height="15" fill={accentColor} />
+    
+    <Rect x="0" y="75" width="25" height="25" fill={primaryColor} stroke={accentColor} strokeWidth="2" />
+    <Rect x="5" y="80" width="15" height="15" fill={accentColor} />
+    
+    <Rect x="35" y="5" width="5" height="15" fill={primaryColor} />
+    <Rect x="45" y="10" width="10" height="5" fill={primaryColor} />
+    <Rect x="60" y="5" width="5" height="10" fill={primaryColor} />
+    
+    <Rect x="5" y="35" width="15" height="5" fill={primaryColor} />
+    <Rect x="10" y="45" width="5" height="10" fill={primaryColor} />
+    <Rect x="5" y="60" width="10" height="5" fill={primaryColor} />
+
+    <Rect x="35" y="35" width="30" height="30" fill={primaryColor} stroke={accentColor} strokeWidth="1" />
+    <Rect x="42" y="42" width="16" height="16" fill={accentColor} />
+    <Circle cx="50" cy="50" r="5" fill="#ffffff" />
+    
+    <Rect x="75" y="35" width="15" height="5" fill={primaryColor} />
+    <Rect x="85" y="45" width="5" height="15" fill={primaryColor} />
+    <Rect x="80" y="65" width="10" height="5" fill={primaryColor} />
+    
+    <Rect x="35" y="75" width="10" height="5" fill={primaryColor} />
+    <Rect x="50" y="80" width="5" height="10" fill={primaryColor} />
+    <Rect x="40" y="90" width="15" height="5" fill={primaryColor} />
+
+    <Rect x="75" y="75" width="5" height="5" fill={primaryColor} />
+    <Rect x="85" y="80" width="10" height="5" fill={primaryColor} />
+    <Rect x="90" y="90" width="5" height="5" fill={primaryColor} />
+  </Svg>
+);
+
 const AVATAR_MAP = {
   'sarah_jenkins': require('../assets/avatar_sarah_jenkins.png'),
   'david_chen': require('../assets/avatar_david_chen.png'),
@@ -149,7 +200,8 @@ export default function ProfileScreen({
   directoryMembers,
   connectionStatuses,
   setConnectionStatuses,
-  showAlert
+  showAlert,
+  safeAreaBottom = 0
 }) {
   const pickImage = async () => {
     setShowFileGallery(true);
@@ -186,6 +238,7 @@ export default function ProfileScreen({
   // 0 = View Profile, 1 = Edit Step 1/3, 2 = Edit Step 2/3, 3 = Edit Step 3/3
   const [editStep, setEditStep] = useState(0);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // Main Profile State variables
   const [profileUsername, setProfileUsername] = useState('vgm');
@@ -261,6 +314,7 @@ export default function ProfileScreen({
   const [tempPersonalName, setTempPersonalName] = useState('');
   const [tempGender, setTempGender] = useState('');
   const [tempDob, setTempDob] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempPhone, setTempPhone] = useState('');
   const [tempEmail, setTempEmail] = useState('');
   const [tempCity, setTempCity] = useState('');
@@ -485,8 +539,15 @@ export default function ProfileScreen({
               </View>
             </View>
           </View>
-          
-          <Text style={styles.idText}>ID: {currentUser?.idCode || 'TAS-2026-00000'}</Text>
+          <View style={styles.idRowContainer}>
+            <Text style={styles.idText}>ID: {currentUser?.idCode || 'TAS-2026-00000'}</Text>
+            <TouchableOpacity 
+              style={styles.qrIdButton} 
+              onPress={() => setShowQrModal(true)}
+            >
+              <QrIcon color="#0A52C5" size={16} />
+            </TouchableOpacity>
+          </View>
 
           {/* Complete your profile bar */}
           {completedCount < 3 && (
@@ -697,6 +758,73 @@ export default function ProfileScreen({
         
         <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* QR Code / E-Visiting Card Modal */}
+      <Modal
+        visible={showQrModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQrModal(false)}
+      >
+        <View style={styles.qrModalOverlay}>
+          <View style={styles.qrCardContainer}>
+            {/* Visiting Card Background Deco */}
+            <View style={styles.qrCardDecoRing1} />
+            <View style={styles.qrCardDecoRing2} />
+
+            {/* Header */}
+            <View style={styles.qrCardHeader}>
+              <Text style={styles.qrCardHeaderBrand}>TAX ADMINISTRATION SOCIETY</Text>
+              <View style={styles.qrCardBadge}>
+                <Text style={styles.qrCardBadgeText}>MEMBER</Text>
+              </View>
+            </View>
+
+            {/* Main content split */}
+            <View style={styles.qrCardBody}>
+              <View style={styles.qrCardInfo}>
+                <Text style={styles.qrCardName}>{personalName || profileUsername}</Text>
+                <Text style={styles.qrCardRole}>{profRole || 'Tax Consultant'}</Text>
+                <Text style={styles.qrCardCompany}>{profCompany || 'TAS Member'}</Text>
+                
+                <View style={styles.qrCardDetailsList}>
+                  <View style={styles.qrCardDetailRow}>
+                    <PhoneIcon color="#64748B" size={13} />
+                    <Text style={styles.qrCardDetailText}>{personalPhone}</Text>
+                  </View>
+                  <View style={styles.qrCardDetailRow}>
+                    <MailIcon color="#64748B" size={13} />
+                    <Text style={styles.qrCardDetailText}>{personalEmail}</Text>
+                  </View>
+                  <View style={styles.qrCardDetailRow}>
+                    <LocationPinIcon color="#64748B" size={13} />
+                    <Text style={styles.qrCardDetailText}>{personalCity || 'Coimbatore'}, {personalState || 'TN'}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.qrCardCodeWrapper}>
+                <DigitalQrCode primaryColor="#000000" accentColor="#000000" />
+                <Text style={styles.qrCardCodeLabel}>SCAN TO CONNECT</Text>
+              </View>
+            </View>
+
+            {/* Footer */}
+            <View style={styles.qrCardFooter}>
+              <Text style={styles.qrCardIdCode}>ID: {currentUser?.idCode || 'TAS-2026-00125'}</Text>
+              <Text style={styles.qrCardVerified}>✓ Verified Profile</Text>
+            </View>
+
+            {/* Close Button */}
+            <TouchableOpacity 
+              style={styles.qrCardCloseBtn} 
+              onPress={() => setShowQrModal(false)}
+            >
+              <Text style={styles.qrCardCloseBtnText}>Close Visiting Card</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 
@@ -804,7 +932,7 @@ export default function ProfileScreen({
       </ScrollView>
 
       {/* Bottom wizard footer */}
-      <View style={styles.wizardFooter}>
+      <View style={[styles.wizardFooter, { paddingBottom: safeAreaBottom > 0 ? safeAreaBottom + 74 : 84 }]}>
         <Text style={styles.wizardFooterStep}>1/3</Text>
         <View style={styles.wizardFooterActions}>
           <TouchableOpacity style={styles.wizardOutlineBtn} onPress={() => setEditStep(0)}>
@@ -874,12 +1002,19 @@ export default function ProfileScreen({
 
           <View style={styles.wizardFieldGroup}>
             <Text style={styles.wizardLabel}>DOB</Text>
-            <TextInput
-              style={styles.wizardUnderlineInput}
-              value={tempDob}
-              onChangeText={setTempDob}
-              placeholder="DD/MM/YYYY"
-            />
+            <TouchableOpacity 
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <TextInput
+                style={styles.wizardUnderlineInput}
+                value={tempDob}
+                placeholder="Select Date of Birth"
+                placeholderTextColor="#94A3B8"
+                editable={false}
+                pointerEvents="none"
+              />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.wizardFieldGroup}>
@@ -955,7 +1090,7 @@ export default function ProfileScreen({
       </ScrollView>
 
       {/* Bottom wizard footer */}
-      <View style={styles.wizardFooter}>
+      <View style={[styles.wizardFooter, { paddingBottom: safeAreaBottom > 0 ? safeAreaBottom + 74 : 84 }]}>
         <Text style={styles.wizardFooterStep}>2/3</Text>
         <View style={styles.wizardFooterActions}>
           <TouchableOpacity style={styles.wizardOutlineBtn} onPress={() => setEditStep(1)}>
@@ -1082,7 +1217,7 @@ export default function ProfileScreen({
       </ScrollView>
 
       {/* Bottom wizard footer */}
-      <View style={styles.wizardFooter}>
+      <View style={[styles.wizardFooter, { paddingBottom: safeAreaBottom > 0 ? safeAreaBottom + 74 : 84 }]}>
         <Text style={styles.wizardFooterStep}>3/3</Text>
         <View style={styles.wizardFooterActions}>
           <TouchableOpacity style={styles.wizardOutlineBtn} onPress={() => setEditStep(2)}>
@@ -1286,6 +1421,13 @@ export default function ProfileScreen({
       {renderOtpModalView()}
       {renderImagePickerModalView()}
       {renderFileGalleryModalView()}
+      
+      <DatePickerModal
+        visible={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(selectedDate) => setTempDob(selectedDate)}
+        currentValue={tempDob}
+      />
     </View>
   );
 }
@@ -1409,7 +1551,22 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  idRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginTop: 12,
+  },
+  qrIdButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E6EEFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#0A52C5',
   },
   completeProfileBar: {
     flexDirection: 'row',
@@ -2269,5 +2426,183 @@ const styles = StyleSheet.create({
     height: 1.2,
     backgroundColor: '#F1F5F9',
     marginVertical: 12,
+  },
+  qrHeaderButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E6EEFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#0A52C5',
+    zIndex: 10,
+  },
+  qrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(3, 37, 76, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  qrCardContainer: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  qrCardDecoRing1: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 15,
+    borderColor: 'rgba(10, 82, 197, 0.03)',
+  },
+  qrCardDecoRing2: {
+    position: 'absolute',
+    bottom: -60,
+    left: -60,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 20,
+    borderColor: 'rgba(10, 82, 197, 0.02)',
+  },
+  qrCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1.2,
+    borderBottomColor: '#F1F5F9',
+    paddingBottom: 10,
+  },
+  qrCardHeaderBrand: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#03254C',
+    letterSpacing: 1.2,
+  },
+  qrCardBadge: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  qrCardBadgeText: {
+    color: '#475569',
+    fontSize: 8.5,
+    fontWeight: '800',
+  },
+  qrCardBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  qrCardInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  qrCardName: {
+    fontSize: 21,
+    fontWeight: '800',
+    color: '#03254C',
+    marginBottom: 4,
+  },
+  qrCardRole: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 2,
+  },
+  qrCardCompany: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0A52C5',
+    marginBottom: 16,
+  },
+  qrCardDetailsList: {
+    marginTop: 8,
+    gap: 8,
+  },
+  qrCardDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  qrCardDetailText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  qrCardCodeWrapper: {
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  qrCardCodeLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#64748B',
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
+  qrCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1.2,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 12,
+    marginBottom: 16,
+  },
+  qrCardIdCode: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  qrCardVerified: {
+    color: '#16A34A',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  qrCardCloseBtn: {
+    backgroundColor: '#03254C',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  qrCardCloseBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

@@ -39,7 +39,10 @@ export default function ChatScreen({
   chatMessages = {},
   setChatMessages,
   directoryMembers = [],
-  showAlert
+  showAlert,
+  callState,
+  setCallState,
+  safeAreaBottom = 0
 }) {
 
   const allMembers = [
@@ -96,7 +99,6 @@ export default function ChatScreen({
   // New states
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
-  const [callState, setCallState] = useState(null); // { type: 'voice' | 'video', status: 'ringing' | 'connected', contact: object }
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
@@ -383,6 +385,7 @@ export default function ChatScreen({
 
   const triggerAutoReply = (timeStr) => {
     const currentChatId = activeChatId;
+    const currentContact = chatsList.find(c => c.id === currentChatId);
     setTimeout(() => {
       const autoReplies = [
         "Got it! I will look into this.",
@@ -392,12 +395,28 @@ export default function ChatScreen({
         "I'm on it."
       ];
       const randomReply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
-      const replyMessage = {
+      
+      let replyMessage = {
         id: Date.now() + 1,
         sender: 'them',
         text: randomReply,
         time: timeStr
       };
+      
+      if (currentContact && currentContact.isGroup) {
+        const membersList = currentContact.members || [];
+        if (membersList.length > 0) {
+          const replyingMember = membersList[Math.floor(Math.random() * membersList.length)];
+          replyMessage = {
+            ...replyMessage,
+            senderName: replyingMember.name,
+            senderAvatar: replyingMember.avatar,
+            senderAvatarColor: replyingMember.avatarColor,
+            senderImage: getContactImage(replyingMember)
+          };
+        }
+      }
+      
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setChatMessages(prev => {
         if (!prev[currentChatId]) return prev;
@@ -411,8 +430,10 @@ export default function ChatScreen({
       // Update latest message text in chat list
       setChatsList(prev => prev.map(c => {
         if (c.id === currentChatId) {
-          // If we are currently active on this chat, it shouldn't show as unread
-          return { ...c, msg: randomReply, time: timeStr, unread: activeChatId !== currentChatId };
+          const displayMsg = currentContact && currentContact.isGroup && replyMessage.senderName 
+            ? `${replyMessage.senderName.split(' ')[0]}: ${randomReply}`
+            : randomReply;
+          return { ...c, msg: displayMsg, time: timeStr, unread: activeChatId !== currentChatId };
         }
         return c;
       }));
@@ -660,7 +681,6 @@ export default function ChatScreen({
 
         {/* WhatsApp Call Header */}
         <View style={styles.callHeaderContainer}>
-          <Text style={styles.callEncryptionText}>🔒 End-to-end encrypted</Text>
           <Text style={styles.callContactName}>{callState.contact.name}</Text>
           <Text style={[styles.callStatus, isRinging && styles.callStatusRinging]}>
             {isRinging ? 'Ringing...' : formatCallTime(callDuration)}
@@ -986,11 +1006,57 @@ export default function ChatScreen({
         return;
       }
       
-      const firstId = parseInt(selectedIds[0]);
-      const member = allMembers.find(m => m.id === firstId);
-      if (!member) return;
+      if (selectedIds.length === 1) {
+        const firstId = parseInt(selectedIds[0]);
+        const member = allMembers.find(m => m.id === firstId);
+        if (!member) return;
+        handleStartChatForMember(member);
+        return;
+      }
+      
+      const selectedMembersList = selectedIds.map(id => allMembers.find(m => m.id === parseInt(id))).filter(Boolean);
+      const groupName = selectedMembersList.map(m => m.name.split(' ')[0]).join(', ');
+      
+      const newGroupId = Date.now();
+      
+      const newGroupChat = {
+        id: newGroupId,
+        name: groupName,
+        avatar: 'GP',
+        avatarColor: '#E6EEFF',
+        isGroup: true,
+        members: selectedMembersList,
+        msg: 'Created a new group conversation',
+        time: 'Just now',
+        unread: false,
+        online: true,
+        status: 'accepted'
+      };
 
-      handleStartChatForMember(member);
+      setChatsList(prev => {
+        if (prev.some(c => c.id === newGroupId)) {
+          return prev;
+        }
+        return [newGroupChat, ...prev];
+      });
+
+      setChatMessages(prev => ({
+        ...prev,
+        [newGroupId]: [
+          {
+            id: 1,
+            sender: 'System',
+            text: `You created group "${groupName}" with ${selectedMembersList.map(m => m.name).join(', ')}.`,
+            time: 'Just now',
+            isSystem: true
+          }
+        ]
+      }));
+
+      setActiveChatId(newGroupId);
+      setChatSubView('conversation');
+      setSelectedMembers({});
+      setMemberSearch('');
     };
 
     return (
@@ -1153,19 +1219,23 @@ export default function ChatScreen({
                   <Text style={styles.convHeaderAvatarText}>{activeChatContact.avatar || '?'}</Text>
                 )}
               </View>
-              <View style={[
-                styles.chatStatusDot, 
-                { backgroundColor: activeChatContact.online ? '#7DBE14' : '#CBD5E1', borderColor: '#FFFFFF', bottom: -1, right: -1 }
-              ]} />
+              {!activeChatContact.isGroup && (
+                <View style={[
+                  styles.chatStatusDot, 
+                  { backgroundColor: activeChatContact.online ? '#7DBE14' : '#CBD5E1', borderColor: '#FFFFFF', bottom: -1, right: -1 }
+                ]} />
+              )}
             </View>
 
             <View style={styles.convHeaderTitleCol}>
               <Text style={styles.convHeaderName}>{activeChatContact.name || 'Chat'}</Text>
               <Text style={[
                 styles.convHeaderStatus, 
-                { color: activeChatContact.online ? '#7DBE14' : '#64748B' }
+                { color: activeChatContact.isGroup ? '#64748B' : (activeChatContact.online ? '#7DBE14' : '#64748B') }
               ]}>
-                {activeChatContact.online ? 'ONLINE' : 'OFFLINE'}
+                {activeChatContact.isGroup 
+                  ? `${activeChatContact.membersCount || activeChatContact.members?.length || 2} members` 
+                  : (activeChatContact.online ? 'ONLINE' : 'OFFLINE')}
               </Text>
             </View>
           </View>
@@ -1206,6 +1276,15 @@ export default function ChatScreen({
             </View>
           ) : (
             messages.map(msg => {
+              if (msg.isSystem) {
+                return (
+                  <View key={msg.id} style={styles.systemMsgContainer}>
+                    <View style={styles.systemMsgBubble}>
+                      <Text style={styles.systemMsgText}>{msg.text}</Text>
+                    </View>
+                  </View>
+                );
+              }
               const isMe = msg.sender === 'me';
               const isSelected = !!selectedMessages[msg.id];
               return (
@@ -1245,16 +1324,19 @@ export default function ChatScreen({
                     )}
                     {!isMe && (
                       <View style={styles.msgAvatarContainer}>
-                        <View style={[styles.msgAvatarSquare, { backgroundColor: activeChatContact.avatarColor }]}>
-                          {getContactImage(activeChatContact) ? (
-                            <Image source={getContactImage(activeChatContact)} style={{ width: '100%', height: '100%' }} />
+                        <View style={[styles.msgAvatarSquare, { backgroundColor: msg.senderAvatarColor || activeChatContact.avatarColor }]}>
+                          {msg.senderImage ? (
+                            <Image source={msg.senderImage} style={{ width: '100%', height: '100%' }} />
                           ) : (
-                            <Text style={styles.msgAvatarText}>{activeChatContact.avatar}</Text>
+                            <Text style={styles.msgAvatarText}>{msg.senderAvatar || activeChatContact.avatar}</Text>
                           )}
                         </View>
                       </View>
                     )}
                     <View style={[styles.msgBubble, isMe ? styles.msgBubbleMe : styles.msgBubbleThem, msg.isAttachment && styles.msgBubbleAttachment]}>
+                      {activeChatContact.isGroup && !isMe && msg.senderName && (
+                        <Text style={styles.groupSenderName}>{msg.senderName}</Text>
+                      )}
                       {/* Quote Reply Box inside bubble */}
                       {msg.replyTo && (
                         <View style={[
@@ -1643,7 +1725,7 @@ export default function ChatScreen({
 
         {/* Floating Action Button */}
         <TouchableOpacity 
-          style={styles.chatFab} 
+          style={[styles.chatFab, { bottom: (safeAreaBottom > 0 ? safeAreaBottom + 86 : (Platform.OS === 'ios' ? 110 : 96)) }]}
           activeOpacity={0.85} 
           onPress={() => {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -2070,7 +2152,7 @@ const styles = StyleSheet.create({
   },
   chatFab: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 86 : 68,
+    bottom: Platform.OS === 'ios' ? 110 : 96,
     right: 20,
     width: 54,
     height: 54,
@@ -3610,5 +3692,30 @@ const styles = StyleSheet.create({
   // Read status override colors
   msgSentStatus: {
     color: '#94A3B8',
+  },
+  groupSenderName: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#7DBE14',
+    marginBottom: 4,
+  },
+  systemMsgContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 12,
+    width: '100%',
+  },
+  systemMsgBubble: {
+    backgroundColor: '#E2E8F0',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    maxWidth: '85%',
+  },
+  systemMsgText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

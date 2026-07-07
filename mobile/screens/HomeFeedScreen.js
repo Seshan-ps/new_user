@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -81,11 +81,58 @@ export default function HomeFeedScreen({
   connectionStatuses,
   setConnectionStatuses,
   currentUser,
-  showAlert
+  showAlert,
+  showDirectory: propShowDirectory,
+  setShowDirectory: propSetShowDirectory,
+  safeAreaBottom = 0
 }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showDirectory, setShowDirectory] = useState(false);
+  const [localShowDirectory, setLocalShowDirectory] = useState(false);
+  const showDirectory = propShowDirectory !== undefined ? propShowDirectory : localShowDirectory;
+  const setShowDirectory = propSetShowDirectory !== undefined ? propSetShowDirectory : setLocalShowDirectory;
+
   const [directoryQuery, setDirectoryQuery] = useState('');
+  const [activeTier, setActiveTier] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const scrollViewRef = useRef(null);
+
+  const getMemberTier = (role) => {
+    const lower = role.toLowerCase();
+    if (lower.includes('chief') || lower.includes('lead') || lower.includes('chartered') || lower.includes('specialist') || lower.includes('analyst') || lower.includes('partner')) {
+      return 'PLATINUM';
+    }
+    if (lower.includes('senior') || lower.includes('manager')) {
+      return 'SENIOR';
+    }
+    if (lower.includes('auditor') || lower.includes('advisor')) {
+      return 'ASSOCIATE';
+    }
+    return 'STUDENT';
+  };
+
+  const getMemberAvatar = (member) => {
+    const defaults = [
+      require('../assets/avatar_sarah_jenkins.png'),
+      require('../assets/avatar_david_chen.png'),
+      require('../assets/avatar_marcus.png'),
+      require('../assets/avatar_elena.png'),
+      require('../assets/avatar_robert.png'),
+    ];
+    return defaults[member.id % defaults.length];
+  };
+
+  const getTierColor = (tier) => {
+    switch (tier) {
+      case 'PLATINUM':
+        return '#7DBE14';
+      case 'SENIOR':
+        return '#0A52C5';
+      case 'ASSOCIATE':
+        return '#34B7F1';
+      default:
+        return '#CBD5E1';
+    }
+  };
   
   // Member profile details view state
   const [selectedMemberForProfile, setSelectedMemberForProfile] = useState(null);
@@ -421,11 +468,17 @@ export default function HomeFeedScreen({
 
   // directoryMembers is now passed as a prop from the parent state.
 
-  const filteredMembers = directoryMembers.filter(member => 
-    member.name.toLowerCase().includes(directoryQuery.toLowerCase()) ||
-    member.role.toLowerCase().includes(directoryQuery.toLowerCase()) ||
-    member.branch.toLowerCase().includes(directoryQuery.toLowerCase())
-  );
+  const filteredMembers = directoryMembers.filter(member => {
+    const matchesSearch = member.name.toLowerCase().includes(directoryQuery.toLowerCase()) ||
+      member.role.toLowerCase().includes(directoryQuery.toLowerCase()) ||
+      member.branch.toLowerCase().includes(directoryQuery.toLowerCase()) ||
+      (member.memberIdCode && member.memberIdCode.toLowerCase().includes(directoryQuery.toLowerCase()));
+
+    const memberTier = getMemberTier(member.role);
+    const matchesTier = activeTier === 'ALL' || memberTier === activeTier;
+
+    return matchesSearch && matchesTier;
+  });
 
   const renderConnectButton = (memberId, memberName) => {
     const status = connectionStatuses[memberId] || 'not_connected';
@@ -454,66 +507,246 @@ export default function HomeFeedScreen({
     );
   };
 
-  const renderDirectoryView = () => (
-    <View style={styles.container}>
-      {/* Header Bar */}
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setShowDirectory(false)}>
-          <BackArrowIcon />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Directory</Text>
-      </View>
+  const renderDirectoryView = () => {
+    const membersPerPage = 6;
+    const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
+    const indexOfLastMember = currentPage * membersPerPage;
+    const indexOfFirstMember = indexOfLastMember - membersPerPage;
+    const currentMembers = filteredMembers.slice(indexOfFirstMember, indexOfLastMember);
 
-      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
-        {/* Search Bar */}
-        <View style={styles.directorySearchWrapper}>
-          <TextInput
-            style={styles.directorySearchInput}
-            placeholder="Search members by name, role, or branch..."
-            placeholderTextColor="#94A3B8"
-            value={directoryQuery}
-            onChangeText={setDirectoryQuery}
-          />
+    const activeBadgeColor = (tier) => {
+      switch (tier) {
+        case 'PLATINUM':
+          return { bg: '#E6F9F0', text: '#16A34A', label: 'PLATINUM ELITE' };
+        case 'SENIOR':
+          return { bg: '#E6EEFF', text: '#0A52C5', label: 'SENIOR FELLOW' };
+        case 'ASSOCIATE':
+          return { bg: '#E0F2FE', text: '#0284C7', label: 'ASSOCIATE' };
+        default:
+          return { bg: '#F1F5F9', text: '#64748B', label: 'STUDENT MEMBER' };
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        {/* Header Bar */}
+        <View style={styles.headerBar}>
+          <TouchableOpacity style={styles.backButton} onPress={() => setShowDirectory(false)}>
+            <BackArrowIcon />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Directory</Text>
         </View>
 
-        {/* Directory Stats Panel */}
-
-        <Text style={styles.feedHeading}>Directory ({filteredMembers.length})</Text>
-
-        {filteredMembers.length === 0 ? (
-          <View style={styles.emptyFeedContainer}>
-            <Text style={styles.emptyFeedText}>No members match your search.</Text>
-          </View>
-        ) : (
-          filteredMembers.map(member => (
-            <View key={member.id} style={styles.memberCard}>
-              <TouchableOpacity 
-                style={styles.memberRowTapArea}
-                onPress={() => setSelectedMemberForProfile(member.id)}
-              >
-                <View style={[styles.memberAvatarCircle, { backgroundColor: member.avatarBg }]}>
-                  <Text style={[styles.memberAvatarText, { color: member.avatarColor }]}>{member.initials}</Text>
-                </View>
-                <View style={styles.memberDetails}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.memberRole}>{member.role}</Text>
-                  <Text style={styles.memberBranch}>{member.branch}</Text>
-                </View>
-              </TouchableOpacity>
-              
-              {renderConnectButton(member.id, member.name)}
+        <ScrollView ref={scrollViewRef} style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+          {/* Members Heading section */}
+          <View style={styles.membersHeaderRow}>
+            <View style={styles.membersTitleRow}>
+              <Text style={styles.membersTitleText}>Members</Text>
+              <View style={styles.activeDatabaseBadge}>
+                <Text style={styles.activeDatabaseBadgeText}>Active Database</Text>
+              </View>
             </View>
-          ))
+            <View style={styles.totalMembersContainer}>
+              <Text style={styles.totalMembersLabel}>TOTAL SOCIETY MEMBERS</Text>
+              <Text style={styles.totalMembersCount}>{directoryMembers.length}</Text>
+            </View>
+          </View>
+
+          {/* Search Registry and Membership Tier Filters */}
+          <View style={styles.filterCard}>
+            <Text style={styles.filterCardLabel}>Search Registry</Text>
+            <View style={styles.registrySearchInputWrapper}>
+              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5" style={{ marginRight: 8 }}>
+                <Circle cx="11" cy="11" r="8" />
+                <Line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </Svg>
+              <TextInput
+                style={styles.registrySearchInput}
+                placeholder="Filter by Name, ID, or Professional Designation."
+                placeholderTextColor="#94A3B8"
+                value={directoryQuery}
+                onChangeText={(val) => {
+                  setDirectoryQuery(val);
+                  setCurrentPage(1);
+                }}
+              />
+            </View>
+
+            <Text style={styles.filterCardLabel}>Membership Tier</Text>
+            <View style={styles.tierPillsWrapper}>
+              {['ALL', 'PLATINUM', 'SENIOR', 'ASSOCIATE', 'STUDENT'].map((tier) => {
+                const isSelected = activeTier === tier;
+                return (
+                  <TouchableOpacity
+                    key={tier}
+                    style={[styles.tierPillBtn, isSelected ? styles.tierPillBtnActive : null]}
+                    onPress={() => {
+                      setActiveTier(tier);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <Text style={[styles.tierPillBtnText, isSelected ? styles.tierPillBtnTextActive : null]}>
+                      {tier}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Member Card Listing */}
+          {currentMembers.length === 0 ? (
+            <View style={styles.emptyFeedContainer}>
+              <Text style={styles.emptyFeedText}>No members match your criteria.</Text>
+            </View>
+          ) : (
+            currentMembers.map(member => {
+              const tier = getMemberTier(member.role);
+              const badge = activeBadgeColor(tier);
+              const avatarBorderColor = getTierColor(tier);
+
+              return (
+                <View key={member.id} style={styles.memberCardNew}>
+                  <TouchableOpacity 
+                    style={styles.memberCardContent}
+                    onPress={() => setSelectedMemberForProfile(member.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Image 
+                      source={getMemberAvatar(member)} 
+                      style={[styles.memberCardImage, { borderColor: avatarBorderColor }]} 
+                    />
+                    
+                    <View style={styles.memberCardDetails}>
+                      <Text style={styles.memberCardName}>{member.name}</Text>
+                      <Text style={styles.memberCardHeadline}>
+                        {member.role}, {member.branch}
+                      </Text>
+
+                      <View style={styles.memberCardIdRow}>
+                        <Svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" style={{ marginRight: 4 }}>
+                          <Rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                          <Line x1="7" y1="8" x2="17" y2="8" />
+                          <Line x1="7" y1="12" x2="15" y2="12" />
+                        </Svg>
+                        <Text style={styles.memberCardIdText}>
+                          ID: {member.memberIdCode || 'TAS-0000-XX'}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.memberCardButtonsRow}>
+                    {(() => {
+                      const status = connectionStatuses[member.id] || 'not_connected';
+                      let btnStyle = styles.memberCardConnectBtnDefault;
+                      let textStyle = styles.memberCardConnectBtnTextDefault;
+                      let label = 'CONNECT';
+                      
+                      if (status === 'pending') {
+                         btnStyle = styles.memberCardConnectBtnPending;
+                         textStyle = styles.memberCardConnectBtnTextPending;
+                         label = 'PENDING';
+                      } else if (status === 'connected') {
+                         btnStyle = styles.memberCardConnectBtnConnected;
+                         textStyle = styles.memberCardConnectBtnTextConnected;
+                         label = 'REMOVE';
+                      }
+
+                      return (
+                        <TouchableOpacity 
+                          style={btnStyle}
+                          onPress={() => handleConnectToggle(member.id, member.name)}
+                        >
+                          <Text style={textStyle}>{label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })()}
+
+                    <TouchableOpacity 
+                      style={styles.memberCardMsgBtn}
+                      onPress={() => {
+                        setActiveDirectChatUser({ name: member.name });
+                        setShowDirectory(false);
+                        onNavigate('chat');
+                      }}
+                    >
+                      <Svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#03254C" strokeWidth="2.5" style={{ marginRight: 6 }}>
+                        <Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </Svg>
+                      <Text style={styles.memberCardMsgBtnText}>MESSAGE</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })
+          )}
+
+          {/* Pagination Controls */}
+          {filteredMembers.length > 0 && (
+            <View style={styles.paginationSection}>
+              <Text style={styles.paginationInfo}>
+                Showing {indexOfFirstMember + 1}-{Math.min(indexOfLastMember, filteredMembers.length)} of {filteredMembers.length} results
+              </Text>
+              
+              <View style={styles.paginationBtnsRow}>
+                <TouchableOpacity 
+                  disabled={currentPage === 1}
+                  style={[styles.pageBtn, currentPage === 1 ? styles.pageBtnDisabled : null]}
+                  onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                >
+                  <Text style={[styles.pageBtnText, currentPage === 1 ? styles.pageBtnTextDisabled : null]}>‹</Text>
+                </TouchableOpacity>
+
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const pageNum = i + 1;
+                  const isActive = currentPage === pageNum;
+                  return (
+                    <TouchableOpacity
+                      key={pageNum}
+                      style={[styles.pageBtn, isActive ? styles.pageBtnActive : null]}
+                      onPress={() => setCurrentPage(pageNum)}
+                    >
+                      <Text style={[styles.pageBtnText, isActive ? styles.pageBtnTextActive : null]}>
+                        {pageNum}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <TouchableOpacity 
+                  disabled={currentPage === totalPages}
+                  style={[styles.pageBtn, currentPage === totalPages ? styles.pageBtnDisabled : null]}
+                  onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                >
+                  <Text style={[styles.pageBtnText, currentPage === totalPages ? styles.pageBtnTextDisabled : null]}>›</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          <View style={{ height: 140 }} />
+        </ScrollView>
+
+        {/* Scroll To Top floating action button */}
+        <TouchableOpacity 
+          style={[styles.floatingScrollTopBtn, { bottom: (safeAreaBottom > 0 ? safeAreaBottom + 110 : 120) }]}
+          onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+        >
+          <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3">
+            <Line x1="12" y1="19" x2="12" y2="5" />
+            <Polyline points="5 12 12 5 19 12" />
+          </Svg>
+        </TouchableOpacity>
+
+        {toastMessage && (
+          <View style={styles.toastContainer}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </View>
         )}
-        <View style={{ height: 100 }} />
-      </ScrollView>
-      {toastMessage && (
-        <View style={styles.toastContainer}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </View>
-      )}
-    </View>
-  );
+      </View>
+    );
+  };
 
   const renderMemberProfileView = (memberId) => {
     const member = directoryMembers.find(m => m.id === memberId);
@@ -1879,5 +2112,321 @@ const styles = StyleSheet.create({
     width: 1.2,
     height: 32,
     backgroundColor: '#E2E8F0',
+  },
+  dirTabWrapper: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginTop: 14,
+    padding: 4,
+  },
+  dirTabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  dirTabButtonActive: {
+    backgroundColor: '#03254C',
+  },
+  dirTabButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  dirTabButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  membersHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 14,
+  },
+  membersTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  membersTitleText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#03254C',
+  },
+  activeDatabaseBadge: {
+    backgroundColor: '#E6F9F0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#7DBE14',
+    marginLeft: 8,
+  },
+  activeDatabaseBadgeText: {
+    color: '#16A34A',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  totalMembersContainer: {
+    alignItems: 'flex-end',
+  },
+  totalMembersLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#94A3B8',
+  },
+  totalMembersCount: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#03254C',
+  },
+  filterCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#03254C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  filterCardLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#03254C',
+    marginBottom: 8,
+  },
+  registrySearchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 16,
+  },
+  registrySearchInput: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#03254C',
+  },
+  tierPillsWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tierPillBtn: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tierPillBtnActive: {
+    backgroundColor: '#03254C',
+    borderColor: '#03254C',
+  },
+  tierPillBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tierPillBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  memberCardNew: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#03254C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  memberCardContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  memberCardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginRight: 16,
+  },
+  memberCardDetails: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  tierBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  tierBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  memberCardName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#03254C',
+    marginBottom: 2,
+  },
+  memberCardHeadline: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  memberCardIdRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  memberCardIdText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  memberCardButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  memberCardConnectBtnDefault: {
+    flex: 1,
+    backgroundColor: '#03254C',
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberCardConnectBtnTextDefault: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  memberCardConnectBtnPending: {
+    flex: 1,
+    backgroundColor: '#94A3B8',
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberCardConnectBtnTextPending: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  memberCardConnectBtnConnected: {
+    flex: 1,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1.2,
+    borderColor: '#EF4444',
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberCardConnectBtnTextConnected: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  memberCardMsgBtn: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#03254C',
+    borderRadius: 10,
+    height: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberCardMsgBtnText: {
+    color: '#03254C',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  paginationSection: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  paginationInfo: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  paginationBtnsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  pageBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageBtnActive: {
+    backgroundColor: '#03254C',
+    borderColor: '#03254C',
+  },
+  pageBtnDisabled: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#F1F5F9',
+  },
+  pageBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  pageBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  pageBtnTextDisabled: {
+    color: '#CBD5E1',
+  },
+  floatingScrollTopBtn: {
+    position: 'absolute',
+    bottom: 120,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#03254C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 999,
   },
 });
